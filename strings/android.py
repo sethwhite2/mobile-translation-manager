@@ -1,7 +1,7 @@
 
 import os
 from bs4 import BeautifulSoup
-from strings.strings import PluralItem, StringFile, StringItem
+from strings.strings import STRING_TYPE, PLURAL_TYPE, PluralItem, StringFile, StringItem
 
 
 class AndroidStringFile(StringFile):
@@ -19,9 +19,9 @@ class AndroidStringFile(StringFile):
         sorted_values = sorted(self.values, key=lambda x: x.key)
         for value in sorted_values:
             value_type = value.type
-            if value_type == StringItem.STRING_TYPE:
+            if value_type == STRING_TYPE:
                 body_string += f'    <string name="{value.key}">{value.value}</string>\n'
-            elif value_type == StringItem.PLURAL_TYPE:
+            elif value_type == PLURAL_TYPE:
                 body_string += f'    <plurals name="{value.key}" tools:ignore="UnusedQuantity">\n'
                 for plural_item in value.plural_items:
                     body_string += f'        <item quantity="{plural_item.quantity}">{plural_item.quantity_value}</item>\n'
@@ -55,7 +55,7 @@ class AndroidStringFile(StringFile):
             string_items.append(
                 StringItem(
                     xml_string['name'],
-                    StringItem.STRING_TYPE,
+                    STRING_TYPE,
                     translatable=xml_string.get('translatable', None) != 'false',
                     value=xml_string.text,
                 )
@@ -66,7 +66,7 @@ class AndroidStringFile(StringFile):
             string_items.append(
                 StringItem(
                     plurals['name'],
-                    StringItem.PLURAL_TYPE,
+                    PLURAL_TYPE,
                     translatable=plurals.get('translatable', None) != 'false',
                     plural_items=get_plural_items(items)
                 )
