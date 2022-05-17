@@ -69,6 +69,18 @@ class StringFile:
     def get_string_files(config):
         raise NotImplementedError('get_string_files must be implemented')
 
+    def update_values(self, map):
+        has_changes = False
+        for value in list(filter(lambda v: v.translatable and v.type == STRING_TYPE, self.values)):
+            string_index = list(filter(lambda o: value.key in o.keys, map.index.values()))[0]
+            string_value = string_index.translations[self.language]
+            if string_value and string_value != value.value:
+                value.value = string_value
+                has_changes = True
+        
+        if has_changes:
+            self.update_strings_file()
+
     def update_strings_file(self):
         try:
             original = self.filepath
@@ -178,3 +190,10 @@ class StringsMap:
         if has_conflicts:
             print('Exiting due to conflicts. Please resolve the conflicts and try again.')
             exit(1)
+
+    def update_files(self, string_files=None):
+        if string_files:
+            self.string_files = string_files
+        
+        for string_file in self.string_files:
+            string_file.update_values(self)

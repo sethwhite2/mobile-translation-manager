@@ -38,14 +38,14 @@ optional arguments:
                 json_data = f.read()
     
     if config:
+        string_files = [
+            *AndroidStringFile.get_string_files(config.android),
+            *iOSStringFile.get_string_files(config.ios)
+        ]
         if json_data:
-            result = StringsMapSchema().loads(json_data)
-            print(result.index)
+            map = StringsMapSchema().loads(json_data)
+            map.update_files(string_files)
         else:
-            string_files = [
-                *AndroidStringFile.get_string_files(config.android),
-                *iOSStringFile.get_string_files(config.ios)
-            ]
             map = StringsMap(string_files, [*config.android.languages, *config.ios.languages])
             map_dict = StringsMapSchema().dumps(map, indent=4, ensure_ascii=False, sort_keys=True)
             with open("string_index.json", 'w') as f:
