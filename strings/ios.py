@@ -17,7 +17,16 @@ class iOSStringFile(StringFile):
 
     @property
     def body(self):
-        return ""
+        body_string = ""
+        sorted_values = sorted(self.values, key=lambda x: x.key)
+        for value in sorted_values:
+            comments = "/* No comment provided by engineer. */"
+            if len(value.comments) > 0:
+                comments = ""
+                for comment in value.comments:
+                    comments += f'{comment}'
+            body_string += f'{comments}"{value.key}" = "{value.value}";\n\n'
+        return body_string
 
     @property
     def footer(self):
