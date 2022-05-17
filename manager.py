@@ -38,7 +38,9 @@ optional arguments:
             *AndroidStringFile.get_string_files(config.android),
             *iOSStringFile.get_string_files(config.ios)
         ]
-        StringsMap(string_files)
+        map = StringsMap(string_files)
+        # now save files after map
+        # check to make sure barty crouch situation doesn't break this implementation
 
 
 if __name__ == '__main__':

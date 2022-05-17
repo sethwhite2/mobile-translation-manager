@@ -85,13 +85,72 @@ class StringFile:
         with open(path, 'w') as f:
             f.write(f'{self.header}{self.body}{self.footer}')
 
+class Translation:
+
+    def __init__(self, language, value):
+        self.language = language
+        self.value = value
+
+class StringIndex:
+    # add type
+    def __init__(self, translatable=True):
+        self.value = value
+        self.translatable = translatable
+        self.keys = []
+        self.translations = []
+        
 
 class StringsMap:
     
     def __init__(self, string_files):
         self.string_files = string_files
+        self.index = {}
         self.map()
 
     def map(self):
+        def find_global_obj_by_string_key(key):
+            for info in self.index.values():
+                if key in info['keys']:
+                    return info
+
+
+        def update_global_obj_by_key(key, language, value):
+            for info in self.index.values():
+                if key in info['keys']:
+                    info['translations'][language] = value
+
         default_files = list(filter(lambda d: d.default == True, self.string_files))
-        print(len(default_files))
+        for default_file in default_files:
+            for string_item in list(filter(lambda s: s.type == StringItem.STRING_TYPE and s.translatable, default_file.values)):
+                if string_item.value in self.index:
+                    self.index[string_item.value]['keys'].append(string_item.key)
+                else:
+                    self.index[string_item.value] = {
+                        "type": "string",
+                        "value": string_item.value,
+                        "translations": {},
+                        'keys': [string_item.key],
+                        'translatable': string_item.translatable,
+                    }
+
+        has_conflicts = False
+        translation_files = list(filter(lambda d: d.default == False, self.string_files))
+        for translation_file in translation_files:
+            for string_item in list(filter(lambda s: s.type == StringItem.STRING_TYPE and s.translatable, translation_file.values)):
+                global_obj = find_global_obj_by_string_key(string_item.key)
+                try:
+                    raw_value = global_obj['value']
+                except TypeError:
+                    print(f'error with value: {string_item.key} - {translation_file.language}')
+                    exit(1)
+                translated_value = global_obj['translations'].get(translation_file.language, raw_value)
+                if string_item.value != raw_value:
+                    if raw_value != translated_value and translated_value != string_item.value:
+                        print(f'conflicting translation for {translation_file.language}: "{raw_value}" translated to "{translated_value}" but another file has "{string_item.value}"')
+                        has_conflicts = True
+                    elif raw_value == translated_value and string_item.value not in [translated_value, raw_value]:
+                        update_global_obj_by_key(string_item.key, translation_file.language, string_item.value)
+
+        if has_conflicts:
+            print('Exiting due to conflicts. Please resolve the conflicts and try again.')
+            exit(1)
