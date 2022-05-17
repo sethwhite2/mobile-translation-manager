@@ -1,7 +1,4 @@
-from email import header
-from email.quoprimime import body_check
 import os
-from bs4 import BeautifulSoup
 import traceback
 
 from utilities.utilities import remove_files
@@ -11,13 +8,14 @@ class StringItem:
     STRING_TYPE = 'string'
     PLURAL_TYPE = 'plural'
     
-    def __init__(self, key, type, translatable, value=None, plural_items=None):
+    def __init__(self, key, type, translatable=True, value=None, plural_items=None, comments=None):
         self.key = key
         self.value = value
         self.plural_items = plural_items
         self.type = type
         self.translatable = translatable
         self.translated = False
+        self.comments = comments
 
 
 class PluralItem:
@@ -28,10 +26,11 @@ class PluralItem:
 
 class StringFile:
 
-    def __init__(self, filepath, language):
+    def __init__(self, filepath, language, default=False):
         self.language = language
         self.values = []
         self.filepath = filepath
+        self.default = default
         self.read_from_file()
 
     def read_from_file(self):
@@ -64,6 +63,10 @@ class StringFile:
     def parse(self):
         raise NotImplementedError("parse must be implemented")
 
+    @staticmethod
+    def get_string_files(config):
+        raise NotImplementedError('get_string_files must be implemented')
+
     def update_strings_file(self):
         try:
             original = self.filepath
@@ -83,74 +86,12 @@ class StringFile:
             f.write(f'{self.header}{self.body}{self.footer}')
 
 
-class AndroidStringFile(StringFile):
+class StringsMap:
     
-    @property
-    def header(self):
-        return "{}{}".format(
-            '<?xml version="1.0" encoding="utf-8"?>\n',
-            '<resources xmlns:tools="http://schemas.android.com/tools"{}>\n'.format(' tools:ignore=\"MissingTranslation\"' if self.language != 'default' else '')
-        )
+    def __init__(self, string_files):
+        self.string_files = string_files
+        self.map()
 
-    @property
-    def body(self):
-        body_string = ""
-        sorted_values = sorted(self.values, key=lambda x: x.key)
-        for value in sorted_values:
-            value_type = value.type
-            if value_type == StringItem.STRING_TYPE:
-                body_string += f'    <string name="{value.key}">{value.value}</string>\n'
-            elif value_type == StringItem.PLURAL_TYPE:
-                body_string += f'    <plurals name="{value.key}" tools:ignore="UnusedQuantity">\n'
-                for plural_item in value.plural_items:
-                    body_string += f'        <item quantity="{plural_item.quantity}">{plural_item.quantity_value}</item>\n'
-                body_string += f'    </plurals>\n'
-            else:
-                raise Exception("Invalid value type.")
-        return body_string
-
-    @property
-    def footer(self):
-        return "{}".format(
-            '</resources>\n'
-        )
-
-    def parse(self):
-        def get_plural_items(items):
-            plural_items = []
-            for item in items:
-                plural_items.append(
-                    PluralItem(
-                        item['quantity'],
-                        item.text
-                    )
-                )
-            return plural_items
-
-        xml = open(self.filepath).read().encode('utf-8')
-        soup = BeautifulSoup(xml, features='xml')
-        string_items = []
-        for xml_string in soup.findAll('string'):
-            string_items.append(
-                StringItem(
-                    xml_string['name'],
-                    StringItem.STRING_TYPE,
-                    xml_string.get('translatable', None) != 'false',
-                    value=xml_string.text,
-                )
-            )
-
-        for plurals in soup.findAll('plurals'):
-            items = plurals.findAll('item')
-            string_items.append(
-                StringItem(
-                    plurals['name'],
-                    StringItem.PLURAL_TYPE,
-                    plurals.get('translatable', None) != 'false',
-                    plural_items=get_plural_items(items)
-                )
-            )
-        return string_items
-
-class iOSStringFile(StringFile):
-    oink = None
+    def map(self):
+        default_files = list(filter(lambda d: d.default == True, self.string_files))
+        print(len(default_files))
