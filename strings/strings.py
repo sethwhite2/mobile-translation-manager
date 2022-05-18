@@ -1,8 +1,8 @@
 import os
 import traceback
+import re
 
-from utilities.utilities import remove_files
-from marshmallow import Schema, fields, post_load
+from utilities.utilities import get_generic_language, remove_files
 
 STRING_TYPE = 'string'
 PLURAL_TYPE = 'plural'
@@ -13,11 +13,29 @@ class StringItem:
     def __init__(self, key, type, translatable=True, value=None, plural_items=None, comments=None):
         self.key = key
         self.value = value
+        self.parsed_value = ""  
+        self.placeholder_map = {}
         self.plural_items = plural_items
         self.type = type
         self.translatable = translatable
         self.translated = False
         self.comments = comments
+        if type == STRING_TYPE:
+            self._parse_value_for_placeholders()
+
+    def _parse_value_for_placeholders(self):
+        # not an exaustive parser yet - handles only general use cases, no modifiers
+        regex = r'(\%[\d]\$[a-zAZ]|%l[dxui]|%zx|%[a-zAZ]|%[@%])'
+        edited_value = self.value
+        match = re.search(regex, edited_value)
+        index = 0
+        while match:
+            placeholder = '{' + f'{index}' + '}'
+            edited_value = placeholder.join([edited_value[:match.start()], edited_value[match.end():]])
+            self.placeholder_map[index] = match.group(0)
+            index += 1
+            match = re.search(regex, edited_value)
+        self.parsed_value = edited_value
 
 
 class PluralItem:
@@ -69,11 +87,18 @@ class StringFile:
     def get_string_files(config):
         raise NotImplementedError('get_string_files must be implemented')
 
+    @property
+    def generic_language(self):
+        return get_generic_language(self.language)
+
     def update_values(self, map):
         has_changes = False
         for value in list(filter(lambda v: v.translatable and v.type == STRING_TYPE, self.values)):
-            string_index = list(filter(lambda o: value.key in o.keys, map.index.values()))[0]
-            string_value = string_index.translations[self.language]
+            string_index = list(filter(lambda o: value.key in [k.key for k in o.keys], map.index.values()))[0]
+            string_value = string_index.translations[self.generic_language]
+            string_key = next(filter(lambda k: value.key == k.key, string_index.keys))
+            for index, placeholder in string_key.placeholder_map.items():
+                string_value = string_value.replace('{' + f'{index}' + '}', placeholder)
             if string_value and string_value != value.value:
                 value.value = string_value
                 has_changes = True
@@ -98,102 +123,3 @@ class StringFile:
     def save_to_file(self, path):
         with open(path, 'w') as f:
             f.write(f'{self.header}{self.body}{self.footer}')
-
-
-class StringIndexSchema(Schema):
-    value = fields.Str()
-    type = fields.Str()
-    translatable = fields.Bool()
-    keys = fields.List(fields.Str())
-    translations = fields.Dict(keys=fields.Str(), values=fields.Str())
-
-    @post_load
-    def make_string_index(self, data, **__):
-        return StringIndex(**data)
-
-class StringIndex:
-
-    def __init__(self, value, type, key=None, languages=None, translatable=True, translations=None, keys=None):
-        self.value = value
-        self.type = type
-        self.translatable = translatable
-        if translations and keys:
-            self.keys = keys
-            self.translations = translations
-        else:
-            self.keys = [key] if key else []
-            self.translations = { language: "" for language in languages } if languages else {}
-    
-
-class StringsMapSchema(Schema):
-    index = fields.Dict(keys=fields.Str(), values=fields.Nested(StringIndexSchema()))
-
-    @post_load
-    def make_strings_map(self, data, **__):
-        return StringsMap(**data)
-
-class StringsMap:
-    # only string types supported at the moment
-    
-    def __init__(self, string_files=None, languages=None, index=None):
-        if string_files and languages:
-            self.index = {}
-            self._map(string_files, languages)
-        else:
-            self.index = index
-
-    def _map(self, string_files, languages):
-        def find_index_by_key(key):
-            for index in self.index.values():
-                if key in index.keys:
-                    return index
-
-        def update_index(key, language, value):
-            for index in self.index.values():
-                if key in index.keys:
-                    index.translations[language] = value
-
-        default_files = list(filter(lambda d: d.default == True, string_files))
-        for default_file in default_files:
-            for string_item in list(filter(lambda s: s.type == STRING_TYPE and s.translatable, default_file.values)):
-                if string_item.value in self.index:
-                    self.index[string_item.value].keys.append(string_item.key)
-                else:
-                    self.index[string_item.value] = StringIndex(
-                        string_item.value,
-                        STRING_TYPE,
-                        string_item.key,
-                        languages,
-                        string_item.translatable
-                    )
-
-        has_conflicts = False
-        translation_files = list(filter(lambda d: d.default == False, string_files))
-        for translation_file in translation_files:
-            for string_item in list(filter(lambda s: s.type == STRING_TYPE and s.translatable, translation_file.values)):
-                index = find_index_by_key(string_item.key)
-                try:
-                    raw_value = index.value
-                except Exception:
-                    print(f'error with value: {string_item.key} - {translation_file.language}\npath: {translation_file.filepath}')
-                    exit(1)
-                translated_value = index.translations.get(translation_file.language, raw_value)
-                if translated_value and string_item.value != raw_value:
-                    if raw_value != translated_value and translated_value != string_item.value:
-                        print(f'conflicting translation for {translation_file.language}: "{raw_value}" translated to "{translated_value}" but another file has "{string_item.value}"')
-                        has_conflicts = True
-                    elif raw_value == translated_value and string_item.value not in [translated_value, raw_value]:
-                        update_index(string_item.key, translation_file.language, string_item.value)
-                elif string_item.value:
-                    update_index(string_item.key, translation_file.language, string_item.value)
-
-        if has_conflicts:
-            print('Exiting due to conflicts. Please resolve the conflicts and try again.')
-            exit(1)
-
-    def update_files(self, string_files=None):
-        if string_files:
-            self.string_files = string_files
-        
-        for string_file in self.string_files:
-            string_file.update_values(self)

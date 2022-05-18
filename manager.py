@@ -5,7 +5,8 @@ from strings.android import AndroidStringFile
 from munch import Munch
 
 from strings.ios import iOSStringFile
-from strings.strings import StringsMap, StringsMapSchema
+from strings.map import StringsMap, StringsMapSchema
+from utilities.utilities import get_generic_languages_from_config
 
 
 def main(argv):
@@ -52,7 +53,7 @@ optional arguments:
             map = StringsMapSchema().loads(json_data)
             map.update_files(string_files)
         elif update_index:
-            map = StringsMap(string_files, [*config.android.languages, *config.ios.languages])
+            map = StringsMap(string_files, get_generic_languages_from_config(config))
             map_dict = StringsMapSchema().dumps(map, indent=4, ensure_ascii=False, sort_keys=True)
             with open("string_index.json", 'w') as f:
                 f.write(map_dict)
