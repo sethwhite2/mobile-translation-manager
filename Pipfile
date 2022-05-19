@@ -8,6 +8,7 @@ beautifulsoup4 = "*"
 lxml = "*"
 munch = "*"
 marshmallow = "*"
+gspread = "*"
 
 [dev-packages]
 
