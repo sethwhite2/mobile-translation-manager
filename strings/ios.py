@@ -67,13 +67,13 @@ class iOSStringFile(StringFile):
 
     @staticmethod
     def get_string_files(config):
-        # can do away with module map
         string_files = []
-        for module in config.modules:
+        for string_dir in config.string_dirs:
             for language in config.languages:
-                if config.has_module_map:
-                    path = os.path.normpath(f'{config.project_dir}/{module.name}/{module.strings_dir}/{language}.lproj/{config.strings_filename}')
-                else:
-                    path = os.path.normpath(f'{config.project_dir}/{module}/{config.strings_dir}/{language}.lproj/{config.strings_filename}')
+                path = os.path.normpath(f'{config.project_dir}/{string_dir}/{language}.lproj/{config.strings_filename}')
                 string_files.append(iOSStringFile(path, language, default=language == config.default_language))
         return string_files
+
+    @staticmethod
+    def popuplate_with_new_keys(config):
+        pass

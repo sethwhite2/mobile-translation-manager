@@ -1,4 +1,5 @@
 
+from operator import truediv
 import os
 from bs4 import BeautifulSoup
 from strings.strings import STRING_TYPE, PLURAL_TYPE, PluralItem, StringFile, StringItem
@@ -76,13 +77,28 @@ class AndroidStringFile(StringFile):
     @staticmethod
     def get_string_files(config):
         string_files = []
-        for module in config.modules:
+        for string_dir in config.string_dirs:
             for language in config.languages:
-                if config.has_module_map:
-                    strings_dir = f'{module.strings_dir}-{language}' if language else module.strings_dir
-                    path = os.path.normpath(f'{config.project_dir}/{module.name}/{strings_dir}/{config.strings_filename}')
-                else:
-                    strings_dir = f'{config.strings_dir}-{language}' if language else config.strings_dir
-                    path = os.path.normpath(f'{config.project_dir}/{module}/{strings_dir}/{config.strings_filename}')
+                strings_dir = f'{string_dir}-{language}' if language else string_dir
+                path = os.path.normpath(f'{config.project_dir}/{strings_dir}/{config.strings_filename}')
                 string_files.append(AndroidStringFile(path, language, language == config.default_language))
         return string_files
+
+
+    @staticmethod
+    def populate_with_new_keys(config):
+        for string_dir in config.string_dirs:
+            default_file_path = os.path.normpath(f'{config.project_dir}/{string_dir}/{config.strings_filename}')
+            default_file = AndroidStringFile(default_file_path, config.default_language, True)
+            translatable_default_keys = set(map(lambda i: i.key, filter(lambda s: s.translatable, default_file.values)))
+            for language in config.languages:
+                if language == config.default_language:
+                    continue
+                strings_dir = f'{string_dir}-{language}' if language else string_dir
+                path = os.path.normpath(f'{config.project_dir}/{strings_dir}/{config.strings_filename}')
+                string_file = AndroidStringFile(path, language, False)
+                translatable_keys = set(map(lambda i: i.key, (filter(lambda s: s.translatable, string_file.values))))
+                if translatable_default_keys != translatable_keys:
+                    for key in translatable_default_keys - translatable_keys:
+                        string_file.insert_new_string_key(key)
+                    string_file.update_strings_file()

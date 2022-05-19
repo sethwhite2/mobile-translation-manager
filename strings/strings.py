@@ -1,3 +1,4 @@
+from lib2to3.pgen2.token import STRING
 import os
 import traceback
 import re
@@ -90,6 +91,20 @@ class StringFile:
     @property
     def generic_language(self):
         return get_generic_language(self.language)
+
+    @staticmethod
+    def popuplate_with_new_keys(config):
+        raise NotImplementedError("popuplate_with_new_keys must be implemented")
+
+    def insert_new_string_key(self, key):
+        self.values.append(
+            StringItem(
+                key,
+                STRING_TYPE,
+                translatable=True,
+                value="",
+            )
+        )
 
     def update_values(self, map):
         has_changes = False

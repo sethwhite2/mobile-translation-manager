@@ -7,7 +7,42 @@ from munch import Munch
 
 from strings.ios import iOSStringFile
 from strings.map import StringsMap, StringsMapSchema
-from utilities.utilities import get_generic_languages_from_config
+from utilities.utilities import get_generic_language
+
+
+def get_generic_languages(config, exclude_default=False):
+    languages = []
+    for application in config.applications:
+        application_languages = application.languages
+        if exclude_default:
+            application_languages.remove(application.default_language)
+        languages.extend(application_languages)
+    languages = set(map(lambda l: get_generic_language(l), languages))
+    return sorted(languages)
+
+
+def get_string_files(config):
+    string_files = []
+    for application in config.applications:
+        platform = application.platform
+        if platform == "ios":
+            string_files.extend(iOSStringFile.get_string_files(application))
+        elif platform == "android":
+            string_files.extend(AndroidStringFile.get_string_files(application))
+        else:
+            raise Exception(f"{platform} is not a supported platform")
+    return string_files
+
+
+def populate_with_new_keys(config):
+    for application in config.applications:
+        platform = application.platform
+        if platform == "android":
+            AndroidStringFile.populate_with_new_keys(application)
+        elif platform == "ios":
+            iOSStringFile.popuplate_with_new_keys(application)
+        else:
+            raise Exception(f"{platform} is not a supported platform")
 
 
 def main(argv):
@@ -28,8 +63,9 @@ optional arguments:
         sys.exit(2)
 
     config = None
-    save = False
     update_index = False
+    save = False
+    deploy = False
     for opt, arg in opts:
         if opt in ('-h', '--help'):
             print(help_message)
@@ -49,32 +85,28 @@ optional arguments:
         print(help_message)
         sys.exit(2)
 
-    if save:
-        with open("string_index.json", 'r') as f:
-            json_data = f.read()
-        string_files = [
-            *AndroidStringFile.get_string_files(config.android),
-            *iOSStringFile.get_string_files(config.ios)
-        ]
-        map = StringsMapSchema().loads(json_data)
-        map.update_files(string_files)
-    elif update_index:
-        string_files = [
-            *AndroidStringFile.get_string_files(config.android),
-            *iOSStringFile.get_string_files(config.ios)
-        ]
-        map = StringsMap(string_files, get_generic_languages_from_config(config))
+
+    if update_index:
+        populate_with_new_keys(config)
+        string_files = get_string_files(config)
+        generic_languages = get_generic_languages(config)
+        map = StringsMap(string_files, generic_languages)
         map_dict = StringsMapSchema().dumps(map, indent=4, ensure_ascii=False, sort_keys=True)
         with open("string_index.json", 'w') as f:
             f.write(map_dict)
-    elif deploy:
+    if save:
         with open("string_index.json", 'r') as f:
             json_data = f.read()
         map = StringsMapSchema().loads(json_data)
-        upload_to_google_sheet(config.sheets_api.spreadsheet_id, map)
-    else:
-        print(help_message)
-        sys.exit(2)
+        string_files = get_string_files(config)
+        map.update_files(string_files)
+    if deploy:
+        with open("string_index.json", 'r') as f:
+            json_data = f.read()
+        generic_languages =  get_generic_languages(config, exclude_default=True)
+        print(generic_languages)
+        map = StringsMapSchema().loads(json_data)
+        upload_to_google_sheet(config.sheets_api.spreadsheet_id, map, generic_languages)
 
 
 if __name__ == '__main__':
