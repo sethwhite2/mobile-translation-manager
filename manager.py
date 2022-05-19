@@ -28,7 +28,6 @@ optional arguments:
         sys.exit(2)
 
     config = None
-    json_data = None
     save = False
     update_index = False
     for opt, arg in opts:
