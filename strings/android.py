@@ -17,11 +17,12 @@ class AndroidStringFile(StringFile):
     @property
     def body(self):
         body_string = ""
-        sorted_values = sorted(self.values, key=lambda x: x.key)
+        sorted_values = sorted(self.values, key=lambda x: x.key.lower())
         for value in sorted_values:
             value_type = value.type
             if value_type == STRING_TYPE:
-                body_string += f'    <string name="{value.key}">{value.value}</string>\n'
+                translatable_value = f' translatable="false"' if not value.translatable else ""
+                body_string += f'    <string name="{value.key}"{translatable_value}>{value.value}</string>\n'
             elif value_type == PLURAL_TYPE:
                 body_string += f'    <plurals name="{value.key}" tools:ignore="UnusedQuantity">\n'
                 for plural_item in value.plural_items:

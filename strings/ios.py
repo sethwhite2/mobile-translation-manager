@@ -3,7 +3,7 @@ import os
 from re import compile
 from strings.strings import STRING_TYPE, StringFile, StringItem
 
-re_translation = compile(r'^"(.+)" = "(.+)";$')
+re_translation = compile(r'^"(.*)" = "(.*)";$')
 re_comment_single = compile(r'^/\*.*\*/$')
 re_comment_start = compile(r'^/\*.*$')
 re_comment_end = compile(r'^.*\*/$')
@@ -18,14 +18,16 @@ class iOSStringFile(StringFile):
     @property
     def body(self):
         body_string = ""
-        sorted_values = sorted(self.values, key=lambda x: x.key)
+        sorted_values = sorted(self.values, key=lambda x: x.key.lower())
         for value in sorted_values:
             comments = "/* No comment provided by engineer. */"
             if len(value.comments) > 0:
                 comments = ""
                 for comment in value.comments:
                     comments += f'{comment}'
-            body_string += f'{comments}"{value.key}" = "{value.value}";\n\n'
+
+            # if blank we need to get the default value from the default language file and set this field
+            body_string += f'{comments}"{value.key}" = "{value.value if value.value else value.key}";\n\n'
         return body_string
 
     @property

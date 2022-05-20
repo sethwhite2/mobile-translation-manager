@@ -96,13 +96,13 @@ class StringFile:
     def popuplate_with_new_keys(config):
         raise NotImplementedError("popuplate_with_new_keys must be implemented")
 
-    def insert_new_string_key(self, key):
+    def insert_new_string_key(self, key, default_value=""):
         self.values.append(
             StringItem(
                 key,
                 STRING_TYPE,
                 translatable=True,
-                value="",
+                value=default_value,
             )
         )
 

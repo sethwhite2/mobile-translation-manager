@@ -85,23 +85,22 @@ optional arguments:
         print(help_message)
         sys.exit(2)
 
-
     if update_index:
         populate_with_new_keys(config)
         string_files = get_string_files(config)
         generic_languages = get_generic_languages(config)
         map = StringsMap(string_files, generic_languages)
         map_dict = StringsMapSchema().dumps(map, indent=4, ensure_ascii=False, sort_keys=True)
-        with open("string_index.json", 'w') as f:
+        with open(config.string_index_filename, 'w') as f:
             f.write(map_dict)
     if save:
-        with open("string_index.json", 'r') as f:
+        with open(config.string_index_filename, 'r') as f:
             json_data = f.read()
         map = StringsMapSchema().loads(json_data)
         string_files = get_string_files(config)
         map.update_files(string_files)
     if deploy:
-        with open("string_index.json", 'r') as f:
+        with open(config.string_index_filename, 'r') as f:
             json_data = f.read()
         generic_languages =  get_generic_languages(config, exclude_default=True)
         print(generic_languages)
