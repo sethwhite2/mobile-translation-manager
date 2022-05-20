@@ -21,6 +21,7 @@ class AndroidStringFile(StringFile):
         for value in sorted_values:
             value_type = value.type
             if value_type == STRING_TYPE:
+                # if blank we need to get the default value from the default language file and set this field
                 translatable_value = f' translatable="false"' if not value.translatable else ""
                 body_string += f'    <string name="{value.key}"{translatable_value}>{value.value}</string>\n'
             elif value_type == PLURAL_TYPE:

@@ -100,7 +100,6 @@ class StringsMap:
                         string_item.translatable
                     )
 
-        has_conflicts = False
         translation_files = list(filter(lambda d: d.default == False, string_files))
         for translation_file in translation_files:
             for string_item in list(filter(lambda s: s.type == STRING_TYPE and s.translatable, translation_file.values)):
@@ -114,31 +113,46 @@ class StringsMap:
                 if translated_value and string_item.parsed_value != raw_value:
                     if FUZZY in translated_value:
                         conflicts = translated_value.replace(FUZZY, "").split('|')
-                        if string_item.value not in conflicts:
-                            print("adding conflict")
-                            conflicts.append(string_item.value)
+                        if string_item.parsed_value not in conflicts:
+                            # print("adding conflict")
+                            conflicts.append(string_item.parsed_value)
                             new_value = f'{FUZZY}{"|".join(conflicts)}'
                             update_index(string_item.key, translation_file.generic_language, new_value)
                     elif raw_value != translated_value and translated_value != string_item.parsed_value:
-                        print(f'conflicting translation for {translation_file.language}:\n\tkey: "{raw_value}"\n\ttranslation: "{translated_value}"\n\tconflict: "{string_item.parsed_value}"\nmarked as fuzzy\n\n')
+                        # print(f'conflicting translation for {translation_file.language}:\n\tkey: "{raw_value}"\n\ttranslation: "{translated_value}"\n\tconflict: "{string_item.parsed_value}"\nmarked as fuzzy\n\n')
                         update_index(string_item.key, translation_file.generic_language, f'{FUZZY}{translated_value}|{string_item.parsed_value}')
                     elif raw_value == translated_value and string_item.parsed_value not in [translated_value, raw_value]:
                         update_index(string_item.key, translation_file.generic_language, string_item.parsed_value)
                 elif string_item.parsed_value:
                     update_index(string_item.key, translation_file.generic_language, string_item.parsed_value)
 
-        if has_conflicts:
-            print('Exiting due to conflicts. Please resolve the conflicts and try again.')
-            exit(1)
-
     def update_files(self, string_files=None):
         has_fuzzy = next(filter(lambda i: next(filter(lambda v: FUZZY in v, i.translations.values()), None) is not None, self.index.values()), None)
         if has_fuzzy:
             print("!!! you must resolve fuzzy translations before saving !!!")
-            return
+            exit(1)
 
         if string_files:
             self.string_files = string_files
         
         for string_file in self.string_files:
             string_file.update_values(self)
+
+    def update(self, key, language, translation):
+        string_index = self.index[key]
+        translated_value = string_index.translations[language]
+        translation = translation if translation else key
+        if FUZZY in translated_value:
+            conflicts = translated_value.replace(FUZZY, "").split('|')
+            if translation not in conflicts:
+                # print("adding conflict")
+                conflicts.append(translation)
+                new_value = f'{FUZZY}{"|".join(conflicts)}'
+                string_index.translations[language] = new_value
+        elif not translated_value:
+            string_index.translations[language] = translation
+        elif key != translated_value and translated_value != translation:
+            # print(f'conflicting translation for {language}:\n\tkey: "{key}"\n\ttranslation: "{translated_value}"\n\tconflict: "{translation}"\nmarked as fuzzy\n\n')
+            string_index.translations[language] = f'{FUZZY}{translated_value}|{translation}'
+        elif key == translated_value and translation not in [translated_value, key]:
+            string_index.translations[language] = new_value

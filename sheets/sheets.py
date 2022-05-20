@@ -1,12 +1,17 @@
 import gspread
 
-def fetch_from_google_sheet(spreadsheet_id, strings_map, languages):
+
+def fetch_from_google_sheet(spreadsheet_id, strings_map):
     gc = gspread.oauth(credentials_filename='credentials.json')
     wks = gc.open_by_key(spreadsheet_id).sheet1
-    # save a backup of the existing strings map
-    # update all values
-    # save string map
-    raise NotImplementedError("not implemented yet")
+    
+    items = wks.get_all_values()
+    languages = items.pop(0)
+    for item in items:
+        key = item[0]
+        for index, translation in enumerate(item):
+            if translation:
+                strings_map.update(key, languages[index], translation)
 
 
 def upload_to_google_sheet(spreadsheet_id, strings_map, languages):

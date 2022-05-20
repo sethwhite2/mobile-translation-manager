@@ -55,15 +55,15 @@ class StringFile:
         self._read_from_file()
 
     def _read_from_file(self):
-        print('>>> Reading {}\npath: {}\n'.format(self.language, self.filepath))
+        # print('>>> Reading {}\npath: {}\n'.format(self.language, self.filepath))
         directory = os.path.dirname(self.filepath)
         if not os.path.exists(directory):
             os.makedirs(directory)
             with open(self.filepath, "w") as f:
                 f.write(self.empty_body)
         self.values = self.parse()
-        print('parsed {} items'.format(len(self.values)))
-        print('\n>>> Closing {}\n\n'.format(self.language))
+        # print('parsed {} items'.format(len(self.values)))
+        # print('\n>>> Closing {}\n\n'.format(self.language))
 
     @property
     def header(self):
