@@ -56,6 +56,13 @@ You'll need to also have a `credentials.json` in order for this library to acces
 
 Usage
 ====
+Install
+----
+```
+pip install mobile-translation-manager
+```
+
+
 Init
 ----
 ```
