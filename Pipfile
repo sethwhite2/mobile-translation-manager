@@ -10,6 +10,7 @@ munch = "*"
 marshmallow = "*"
 gspread = "*"
 setuptools = "*"
+twine = "*"
 
 [dev-packages]
 

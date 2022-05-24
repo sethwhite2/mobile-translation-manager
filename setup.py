@@ -3,6 +3,7 @@ import setuptools
 setuptools.setup(
     name="mobile_translation_manager",
     description="A library that aims to simplify managing translations for iOS and Android applications.",
+    long_description="A library that aims to simplify managing translations for iOS and Android applications.",
     version="0.0.1",
     author='Seth White',
     author_email="flying.squirrel.development@gmail.com",
