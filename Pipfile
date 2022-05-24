@@ -9,6 +9,7 @@ lxml = "*"
 munch = "*"
 marshmallow = "*"
 gspread = "*"
+setuptools = "*"
 
 [dev-packages]
 
