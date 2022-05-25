@@ -3,7 +3,7 @@ import os
 import traceback
 import re
 
-from utilities.utilities import get_generic_language, remove_files
+from .utilities import get_generic_language, remove_files
 
 STRING_TYPE = 'string'
 PLURAL_TYPE = 'plural'

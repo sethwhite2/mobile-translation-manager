@@ -1,8 +1,6 @@
-
-from operator import truediv
 import os
 from bs4 import BeautifulSoup
-from strings.strings import STRING_TYPE, PLURAL_TYPE, PluralItem, StringFile, StringItem
+from .strings import STRING_TYPE, PLURAL_TYPE, PluralItem, StringFile, StringItem
 
 
 class AndroidStringFile(StringFile):

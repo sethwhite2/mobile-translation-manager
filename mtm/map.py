@@ -1,6 +1,6 @@
 from marshmallow import Schema, fields, post_load
 
-from strings.strings import STRING_TYPE
+from .strings import STRING_TYPE
 
 
 FUZZY = "~fuzzy; "

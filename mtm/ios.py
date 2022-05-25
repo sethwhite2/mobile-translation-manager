@@ -1,7 +1,6 @@
-
 import os
 from re import compile
-from strings.strings import STRING_TYPE, StringFile, StringItem
+from .strings import STRING_TYPE, StringFile, StringItem
 
 re_translation = compile(r'^"(.*)" = "(.*)";$')
 re_comment_single = compile(r'^/\*.*\*/$')

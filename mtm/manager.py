@@ -2,13 +2,13 @@ from datetime import datetime
 import os
 import shutil
 import json
-from sheets.sheets import fetch_from_google_sheet, upload_to_google_sheet
-from strings.android import AndroidStringFile
+from .sheets import fetch_from_google_sheet, upload_to_google_sheet
+from .android import AndroidStringFile
 from munch import Munch
 
-from strings.ios import iOSStringFile
-from strings.map import StringsMap, StringsMapSchema
-from utilities.utilities import get_generic_language
+from .ios import iOSStringFile
+from .map import StringsMap, StringsMapSchema
+from .utilities import get_generic_language
 
 
 DEFAULT_CONFIG_PATH = "config.json"
@@ -76,6 +76,11 @@ def init(config_path=DEFAULT_CONFIG_PATH):
 
 def sync(config_path=DEFAULT_CONFIG_PATH):
     config = get_config(config_path)
+
+    if not os.path.exists(config.string_index_filename):
+        print("The string index file is not created yet. Please call the \"init\" function to initalize the string index.")
+        exit(0)
+
     # create backup
     string_index_path = f"{os.getcwd()}/{config.string_index_filename}"
     shutil.copyfile(string_index_path, f"{string_index_path}.{datetime.now().strftime('%s')}.bak")
