@@ -59,12 +59,7 @@ def populate_with_new_keys(config_path=DEFAULT_CONFIG_PATH):
 def init(config_path=DEFAULT_CONFIG_PATH):
     config = get_config(config_path)
     if os.path.exists(config.string_index_filename):
-        user_input = input(f"The string index file already exits: {config.string_index_filename}\nIf you continue, the file will be overwritten. Continue? [y/n]\t")
-        if user_input == 'y':
-            print(f"Overwritting {config.string_index_filename}")
-        else:
-            print("exiting")
-            exit(2)
+        raise Exception("index file already exists")
 
     string_files = _get_string_files(config)
     generic_languages = _get_generic_languages(config)
@@ -75,31 +70,31 @@ def init(config_path=DEFAULT_CONFIG_PATH):
 
 
 def sync(config_path=DEFAULT_CONFIG_PATH):
+    print("starting sync")
     config = get_config(config_path)
 
     if not os.path.exists(config.string_index_filename):
-        print("The string index file is not created yet. Please call the \"init\" function to initalize the string index.")
-        exit(0)
+        raise Exception("The string index file is not created yet. Please call the \"init\" function to initalize the string index.")
 
-    # create backup
+    print("creating backup")
     string_index_path = f"{os.getcwd()}/{config.string_index_filename}"
     shutil.copyfile(string_index_path, f"{string_index_path}.{datetime.now().strftime('%s')}.bak")
 
-    # get current map
+    print("getting current string index")
     with open(config.string_index_filename, 'r') as f:
         json_data = f.read()
     map = StringsMapSchema().loads(json_data)
     
-    # get strings files
+    print("loading string files")
     string_files = _get_string_files(config)
 
-    # update map with project values
+    print("syncing string index with project strings")
     map.update_files(string_files)
 
-    # update map with edited values from translator
+    print("syncing string index with google sheet")
     fetch_from_google_sheet(config.sheets_api.spreadsheet_id, map)
 
-    # save to file
+    print('saving string index')
     map_dict = StringsMapSchema().dumps(map, indent=4, ensure_ascii=False, sort_keys=True)
     with open(config.string_index_filename, 'w') as f:
         f.write(map_dict)

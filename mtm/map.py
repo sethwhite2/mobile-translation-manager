@@ -107,19 +107,16 @@ class StringsMap:
                 try:
                     raw_value = index.value
                 except Exception:
-                    print(f'error with value: {string_item.key} - {translation_file.language}\npath: {translation_file.filepath}')
-                    exit(1)
+                    raise Exception(f'error with value: {string_item.key} - {translation_file.language}\npath: {translation_file.filepath}')
                 translated_value = index.translations.get(translation_file.generic_language, raw_value)
                 if translated_value and string_item.parsed_value != raw_value:
                     if FUZZY in translated_value:
                         conflicts = translated_value.replace(FUZZY, "").split('|')
                         if string_item.parsed_value not in conflicts:
-                            # print("adding conflict")
                             conflicts.append(string_item.parsed_value)
                             new_value = f'{FUZZY}{"|".join(conflicts)}'
                             update_index(string_item.key, translation_file.generic_language, new_value)
                     elif raw_value != translated_value and translated_value != string_item.parsed_value:
-                        # print(f'conflicting translation for {translation_file.language}:\n\tkey: "{raw_value}"\n\ttranslation: "{translated_value}"\n\tconflict: "{string_item.parsed_value}"\nmarked as fuzzy\n\n')
                         update_index(string_item.key, translation_file.generic_language, f'{FUZZY}{translated_value}|{string_item.parsed_value}')
                     elif raw_value == translated_value and string_item.parsed_value not in [translated_value, raw_value]:
                         update_index(string_item.key, translation_file.generic_language, string_item.parsed_value)
@@ -129,8 +126,7 @@ class StringsMap:
     def update_files(self, string_files=None):
         has_fuzzy = next(filter(lambda i: next(filter(lambda v: FUZZY in v, i.translations.values()), None) is not None, self.index.values()), None)
         if has_fuzzy:
-            print("!!! you must resolve fuzzy translations before saving !!!")
-            exit(1)
+            raise Exception("!!! you must resolve fuzzy translations before saving !!!")
 
         if string_files:
             self.string_files = string_files
@@ -145,14 +141,12 @@ class StringsMap:
         if FUZZY in translated_value:
             conflicts = translated_value.replace(FUZZY, "").split('|')
             if translation not in conflicts:
-                # print("adding conflict")
                 conflicts.append(translation)
                 new_value = f'{FUZZY}{"|".join(conflicts)}'
                 string_index.translations[language] = new_value
         elif not translated_value:
-            string_index.translations[language] = translation
+            string_index.translations[language] = key
         elif key != translated_value and translated_value != translation:
-            # print(f'conflicting translation for {language}:\n\tkey: "{key}"\n\ttranslation: "{translated_value}"\n\tconflict: "{translation}"\nmarked as fuzzy\n\n')
             string_index.translations[language] = f'{FUZZY}{translated_value}|{translation}'
         elif key == translated_value and translation not in [translated_value, key]:
-            string_index.translations[language] = new_value
+            string_index.translations[language] = translation

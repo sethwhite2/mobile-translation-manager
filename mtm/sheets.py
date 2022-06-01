@@ -10,8 +10,7 @@ def fetch_from_google_sheet(spreadsheet_id, strings_map):
     for item in items:
         key = item[0]
         for index, translation in enumerate(item):
-            if translation:
-                strings_map.update(key, languages[index], translation)
+            strings_map.update(key, languages[index], translation)
 
 
 def upload_to_google_sheet(spreadsheet_id, strings_map, languages):

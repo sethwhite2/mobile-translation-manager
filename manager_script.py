@@ -1,10 +1,7 @@
 import getopt
 import sys
 
-from manager import init, save, deploy, sync
-
-# todo: add verbose option to log output or action
-# todo: implement tqdm for progress
+from mtm.manager import init, save, deploy, sync
 
 
 def main(argv):
