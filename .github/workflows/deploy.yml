@@ -25,7 +25,7 @@ jobs:
     - name: Set up Python
       uses: palewire/install-python-pipenv-pipfile@v2
       with:
-        python-version: 3.X
+        python-version: 3.9
     - name: Build package
       run: python setup.py sdist
     - name: Publish package
