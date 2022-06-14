@@ -86,9 +86,11 @@ def sync(config_path=DEFAULT_CONFIG_PATH):
     map = StringsMapSchema().loads(json_data)
     
     print("loading string files")
+    generic_languages = _get_generic_languages(config)
     string_files = _get_string_files(config)
 
     print("syncing string index with project strings")
+    map.sync(string_files, generic_languages)
     map.update_files(string_files)
 
     print("syncing string index with google sheet")

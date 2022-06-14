@@ -18,6 +18,7 @@ class iOSStringFile(StringFile):
     def body(self):
         body_string = ""
         sorted_values = sorted(self.values, key=lambda x: x.key.lower())
+        is_first = True
         for value in sorted_values:
             comments = "/* No comment provided by engineer. */"
             if len(value.comments) > 0:
@@ -26,7 +27,11 @@ class iOSStringFile(StringFile):
                     comments += f'{comment}'
 
             # if blank we need to get the default value from the default language file and set this field
-            body_string += f'{comments}"{value.key}" = "{value.value if value.value else value.key}";\n\n'
+            if is_first:
+                is_first = False
+                body_string += f'{comments}"{value.key}" = "{value.value if value.value else value.key}";\n'
+            else:
+                body_string += f'\n{comments}"{value.key}" = "{value.value if value.value else value.key}";\n'
         return body_string
 
     @property

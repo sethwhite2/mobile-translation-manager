@@ -123,6 +123,9 @@ class StringsMap:
                 elif string_item.parsed_value:
                     update_index(string_item.key, translation_file.generic_language, string_item.parsed_value)
 
+    def sync(self, strings_files, languages):
+        self._map(strings_files, languages)
+
     def update_files(self, string_files=None):
         has_fuzzy = next(filter(lambda i: next(filter(lambda v: FUZZY in v, i.translations.values()), None) is not None, self.index.values()), None)
         if has_fuzzy:

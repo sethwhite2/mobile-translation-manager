@@ -79,7 +79,7 @@ class StringFile:
 
     @property
     def empty_body(self):
-        return f'{self.header}\n{self.footer}'
+        return f'{self.header}{self.footer}'
 
     def parse(self):
         raise NotImplementedError("parse must be implemented")
