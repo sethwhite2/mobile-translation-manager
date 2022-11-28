@@ -84,12 +84,15 @@ class StringsMap:
         for default_file in default_files:
             for string_item in list(filter(lambda s: s.type == STRING_TYPE and s.translatable, default_file.values)):
                 if string_item.parsed_value in self.index:
-                    self.index[string_item.parsed_value].keys.append(
-                        StringKey(
-                            string_item.key,
-                            string_item.placeholder_map
+                    keys = self.index[string_item.parsed_value].keys
+                    existing_keys = [key for key in keys if key.key == string_item.key]
+                    if not len(existing_keys):
+                        keys.append(
+                            StringKey(
+                                string_item.key,
+                                string_item.placeholder_map
+                            )
                         )
-                    )
                 else:
                     self.index[string_item.parsed_value] = StringIndex(
                         string_item.parsed_value,
@@ -121,6 +124,7 @@ class StringsMap:
                     elif raw_value == translated_value and string_item.parsed_value not in [translated_value, raw_value]:
                         update_index(string_item.key, translation_file.generic_language, string_item.parsed_value)
                 elif string_item.parsed_value:
+                    # todo: this could be problematic
                     update_index(string_item.key, translation_file.generic_language, string_item.parsed_value)
 
     def sync(self, strings_files, languages):

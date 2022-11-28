@@ -109,16 +109,19 @@ class StringFile:
     def update_values(self, map):
         has_changes = False
         for value in list(filter(lambda v: v.translatable and v.type == STRING_TYPE, self.values)):
-            string_index = list(filter(lambda o: value.key in [k.key for k in o.keys], map.index.values()))[0]
-            string_value = string_index.translations[self.generic_language]
-            string_key = next(filter(lambda k: value.key == k.key, string_index.keys))
-            for index, placeholder in string_key.placeholder_map.items():
-                string_value = string_value.replace('{' + f'{index}' + '}', placeholder)
-            if string_value and string_value != value.value:
-                value.value = string_value
-                has_changes = True
+            string_index_list = list(filter(lambda o: value.key in [k.key for k in o.keys], map.index.values()))
+            if string_index_list:
+                string_index = string_index_list[0]
+                string_value = string_index.translations[self.generic_language]
+                string_key = next(filter(lambda k: value.key == k.key, string_index.keys))
+                for index, placeholder in string_key.placeholder_map.items():
+                    string_value = string_value.replace('{' + f'{index}' + '}', placeholder)
+                if string_value and string_value != value.value:
+                    value.value = string_value
+                    has_changes = True
         
         if has_changes:
+            # todo: we may not need to do this check -- has issues with newly added keys
             self.update_strings_file()
 
     def update_strings_file(self):

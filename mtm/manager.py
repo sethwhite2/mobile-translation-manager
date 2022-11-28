@@ -106,7 +106,7 @@ def save(config_path=DEFAULT_CONFIG_PATH):
     config = get_config(config_path)
     # todo: figure out how to incorperate this with the save
     # need to make sure project files have the same keys as the default files
-    #populate_with_new_keys(config)
+    populate_with_new_keys(config_path)
     with open(config.string_index_filename, 'r') as f:
         json_data = f.read()
     map = StringsMapSchema().loads(json_data)

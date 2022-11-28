@@ -9,7 +9,7 @@ class AndroidStringFile(StringFile):
     def header(self):
         return "{}{}".format(
             '<?xml version="1.0" encoding="utf-8"?>\n',
-            '<resources xmlns:tools="http://schemas.android.com/tools"{}>\n'.format(' tools:ignore=\"MissingTranslation\"' if self.language != '' else '')
+            '<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore=\"MissingTranslation\">\n'
         )
 
     @property
@@ -19,7 +19,7 @@ class AndroidStringFile(StringFile):
         for value in sorted_values:
             value_type = value.type
             if value_type == STRING_TYPE:
-                # if blank we need to get the default value from the default language file and set this field
+                # todo: if blank we need to get the default value from the default language file and set this field
                 translatable_value = f' translatable="false"' if not value.translatable else ""
                 body_string += f'    <string name="{value.key}"{translatable_value}>{value.value}</string>\n'
             elif value_type == PLURAL_TYPE:
